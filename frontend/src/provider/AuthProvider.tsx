@@ -1,0 +1,53 @@
+//Get the user’s login token from Clerk.
+//Attach that token to Axios so that every request automatically includes it — this way  backend 
+//knows who is making the request.
+
+
+import { axiosInstance } from "@/lib/axios"
+import { useAuth} from "@clerk/clerk-react"
+import { Loader } from "lucide-react";
+import { useEffect, useState } from "react"
+
+const updateApiToken = (token:string | null) => {
+    if(token){
+        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }else{
+        delete axiosInstance.defaults.headers.common['Authorization']
+    }
+}
+
+const AuthProvider = ({children}: {children:React.ReactNode}) => {
+    const {getToken, } = useAuth();
+    const [loading,setloading] = useState(true);
+
+    useEffect(()=>{
+        const initAuth = async () => {
+            try {
+                const token = await getToken();
+                updateApiToken(token);
+
+                if(token){
+                    // todo : fetch users
+                }
+
+            } catch (error:any) {
+                updateApiToken(null);
+                console.log("Error in authProvider",error);
+            }finally{
+                setloading(false);
+            }
+        };
+
+        initAuth();
+    },[getToken]);
+
+    if(loading) return (
+        <div className="h-screen w-full flex items-center justify-center">
+            <Loader className="size-8 text-emerald-500 animate-spin" />
+        </div>
+    )
+
+    return <>{children}</>;
+}
+
+export default AuthProvider
